@@ -1,0 +1,354 @@
+{
+  "info": {
+    "_postman_id": "b7d76e62-e80a-4909-a993-92d2e6f094b1",
+    "name": "Task 5 – Jokes API",
+    "description": "A viccek CRUD műveleteinek és a hibás kéréseknek az automatizált tesztjei.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8000",
+      "type": "string"
+    },
+    {
+      "key": "jokeId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. GET all jokes",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/jokes",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "jokes"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+              "pm.test('A válasz JSON-tömb', function () { pm.expect(pm.response.json()).to.be.an('array'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. POST create joke",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"type\": \"single\",\n  \"joke\": \"Why do programmers prefer dark mode? Because light attracts bugs.\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/jokes",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "jokes"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+              "pm.test('Üzenet és azonosítóval rendelkező rekord', function () { const body = pm.response.json(); pm.expect(body.message).to.be.a('string'); pm.expect(body.data).to.be.an('object'); pm.expect(body.data.id).to.be.a('number'); pm.collectionVariables.set('jokeId', body.data.id); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. GET created joke",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/jokes/{{jokeId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "jokes", "{{jokeId}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+              "pm.test('A létrehozott vicc adatai', function () { const body = pm.response.json(); pm.expect(body.id).to.eql(Number(pm.collectionVariables.get('jokeId'))); pm.expect(body.type).to.eql('single'); pm.expect(body.joke).to.be.a('string'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. PUT replace with twopart",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"type\": \"twopart\",\n  \"setup\": \"Why do programmers prefer dark mode?\",\n  \"delivery\": \"Because light attracts bugs.\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/jokes/{{jokeId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "jokes", "{{jokeId}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+              "pm.test('A lecserélt rekord és üzenet', function () { const body = pm.response.json(); pm.expect(body.message).to.be.a('string'); pm.expect(body.data.type).to.eql('twopart'); pm.expect(body.data.setup).to.eql('Why do programmers prefer dark mode?'); pm.expect(body.data.delivery).to.eql('Because light attracts bugs.'); pm.expect(body.data.joke).to.eql(null); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. PATCH delivery only",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"delivery\": \"Because the light is full of bugs!\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/jokes/{{jokeId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "jokes", "{{jokeId}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+              "pm.test('Csak a delivery módosult, a setup megmaradt', function () { const body = pm.response.json(); pm.expect(body.message).to.be.a('string'); pm.expect(body.data.setup).to.eql('Why do programmers prefer dark mode?'); pm.expect(body.data.delivery).to.eql('Because the light is full of bugs!'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. DELETE joke",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/jokes/{{jokeId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "jokes", "{{jokeId}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+              "pm.test('Törlési üzenet', function () { pm.expect(pm.response.json().message).to.be.a('string'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. GET deleted joke",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/jokes/{{jokeId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "jokes", "{{jokeId}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('404 Not Found', function () { pm.response.to.have.status(404); });",
+              "pm.test('JSON error mező', function () { pm.expect(pm.response.json().error).to.be.a('string'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. GET invalid id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/jokes/0",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "jokes", "0"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 Bad Request', function () { pm.response.to.have.status(400); });",
+              "pm.test('JSON error mező', function () { pm.expect(pm.response.json().error).to.be.a('string'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. POST invalid joke",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"type\": \"invalid\",\n  \"joke\": \"This must be rejected.\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/jokes",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "jokes"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 Bad Request', function () { pm.response.to.have.status(400); });",
+              "pm.test('JSON error mező', function () { pm.expect(pm.response.json().error).to.be.a('string'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. GET filtered single jokes",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/jokes?type=single",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "jokes"],
+          "query": [
+            {
+              "key": "type",
+              "value": "single"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+              "pm.test('Minden eredmény single típusú', function () { pm.response.json().forEach(function (joke) { pm.expect(joke.type).to.eql('single'); }); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. GET invalid type filter",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/jokes?type=unknown",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "jokes"],
+          "query": [
+            {
+              "key": "type",
+              "value": "unknown"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 Bad Request', function () { pm.response.to.have.status(400); });",
+              "pm.test('JSON error mező', function () { pm.expect(pm.response.json().error).to.be.a('string'); });"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
